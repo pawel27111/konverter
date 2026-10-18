@@ -31,12 +31,24 @@ class App:
         outer.pack(fill="both", expand=True)
         ttk.Label(outer, text="Konverter", style="Title.TLabel").pack(anchor="w")
         ttk.Label(outer, text="Diffusion-Modelle lokal in Apple .caipack umwandeln · Windows mit WSL2").pack(anchor="w", pady=(0, 14))
-        tabs = ttk.Notebook(outer)
+        tabs = ttk.Notebook(outer, height=300)
         tabs.pack(fill="x")
-        model, extra, access = [ttk.Frame(tabs, padding=14) for _ in range(3)]
-        for tab, label in zip((model, extra, access), ("Modell & Export", "Erweiterte Optionen", "Lizenz & Zugang")):
-            tabs.add(tab, text=label)
-            tab.columnconfigure(1, weight=1)
+        pages = []
+        for label in ("Modell & Export", "Erweiterte Optionen", "Lizenz & Zugang"):
+            page = ttk.Frame(tabs)
+            tabs.add(page, text=label)
+            canvas = tk.Canvas(page, highlightthickness=0, height=300)
+            scrollbar = ttk.Scrollbar(page, orient="vertical", command=canvas.yview)
+            scrollbar.pack(side="right", fill="y")
+            canvas.pack(side="left", fill="both", expand=True)
+            canvas.configure(yscrollcommand=scrollbar.set)
+            form = ttk.Frame(canvas, padding=14)
+            form.columnconfigure(1, weight=1)
+            item = canvas.create_window((0, 0), window=form, anchor="nw")
+            form.bind("<Configure>", lambda event, c=canvas: c.configure(scrollregion=c.bbox("all")))
+            canvas.bind("<Configure>", lambda event, c=canvas, i=item: c.itemconfigure(i, width=event.width))
+            pages.append(form)
+        model, extra, access = pages
         self.field(model, 0, "source", "Modellquelle", browse="source")
         self.field(model, 1, "output_dir", "Ausgabeordner", str(Path.home() / "Documents" / "Konverter"), browse="dir")
         self.field(model, 2, "name", "Paketname (optional)")
@@ -85,8 +97,8 @@ class App:
         self.progress = ttk.Progressbar(outer, mode="indeterminate")
         self.progress.pack(fill="x", pady=(5, 8))
         self.log = scrolledtext.ScrolledText(outer, height=12, state="disabled", wrap="word", font=("Consolas", 9))
+        ttk.Button(outer, text="Protokoll speichern …", command=self.save_log).pack(side="bottom", anchor="e", pady=(6, 0))
         self.log.pack(fill="both", expand=True)
-        ttk.Button(outer, text="Protokoll speichern …", command=self.save_log).pack(anchor="e", pady=(6, 0))
         root.protocol("WM_DELETE_WINDOW", self.close)
         root.after(100, self.poll)
 
@@ -228,9 +240,19 @@ class App:
 
 def main():
     root = tk.Tk()
-    App(root)
+    app = App(root)
     if "--smoke-test" in sys.argv:
-        root.update()
+        for geometry in ("980x800", "780x660"):
+            root.geometry(geometry)
+            root.update()
+            assert app.log.winfo_height() >= 80, "Log area is unusable at the supported window size"
+            assert app.cancel_button.winfo_ismapped(), "Action buttons are hidden"
+        app.values["source"].set("org/model")
+        app.values["steps"].set("25")
+        app.values["guidance"].set("7.5")
+        app.loras.insert("1.0", "org/lora:0.8")
+        args = app.arguments("convert")
+        assert args.source == "org/model" and args.steps == 25 and args.lora == ["org/lora:0.8"]
         root.destroy()
         return 0
     root.mainloop()

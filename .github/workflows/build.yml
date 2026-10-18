@@ -21,6 +21,7 @@ jobs:
       - run: python -m pip install .
       - run: python -m unittest discover -s tests -v
       - name: Windows UI smoke test
+        timeout-minutes: 2
         if: runner.os == 'Windows'
         run: python -m konverter.gui --smoke-test
       - name: Parse Windows installer
@@ -48,6 +49,7 @@ jobs:
           & ./dist/konverter-cli.exe convert --help
           if ($LASTEXITCODE -ne 0) { throw "CLI help failed" }
       - name: Check desktop executable
+        timeout-minutes: 2
         shell: pwsh
         run: |
           $process = Start-Process ./dist/Konverter.exe -ArgumentList '--smoke-test' -PassThru -Wait
@@ -58,6 +60,48 @@ jobs:
           path: Konverter-Windows-x64.zip
           if-no-files-found: error
           retention-days: 30
+  wsl:
+    needs: windows
+    runs-on: windows-2025
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/download-artifact@v4
+        with:
+          name: Konverter-Windows-x64
+          path: windows-package
+      - name: Extract Windows application
+        shell: pwsh
+        run: Expand-Archive windows-package/Konverter-Windows-x64.zip -DestinationPath windows-app
+      - name: Initialize WSL2 prerequisites
+        shell: powershell
+        run: ./konverter/Setup-Windows.ps1 -PrerequisitesOnly
+      - name: Install compiler through the actual Windows executable
+        shell: pwsh
+        run: |
+          & ./windows-app/konverter-cli.exe --distro Ubuntu-24.04 setup
+          if ($LASTEXITCODE -ne 0) { throw "Windows/WSL engine setup failed" }
+      - name: Generate fixture in a Windows path with spaces and Unicode
+        shell: pwsh
+        run: |
+          $fixture = Join-Path $PWD 'test-output/Modell ä & test'
+          $fixtureLinux = (& wsl.exe -d Ubuntu-24.04 --exec wslpath -a -u $fixture).Trim()
+          $scriptLinux = (& wsl.exe -d Ubuntu-24.04 --exec wslpath -a -u "$PWD/scripts/compiler_smoke.py").Trim()
+          $enginePython = (& wsl.exe -d Ubuntu-24.04 --exec python3 -c "from pathlib import Path; print(Path.home()/'.local/share/konverter/engine-873560b6f9c9/.venv/bin/python')").Trim()
+          & wsl.exe -d Ubuntu-24.04 --exec $enginePython $scriptLinux $fixtureLinux
+          if ($LASTEXITCODE -ne 0) { throw "Fixture generation in WSL failed" }
+      - name: Export from Windows to a Windows output folder
+        shell: pwsh
+        run: |
+          & ./windows-app/konverter-cli.exe --distro Ubuntu-24.04 --no-setup convert "$PWD/test-output/Modell ä & test" --target ios --name Windows-Smoke --license-name MIT --output-dir "$PWD/test-output/Windows Export"
+          if ($LASTEXITCODE -ne 0) { throw "Windows/WSL export failed" }
+          & ./windows-app/konverter-cli.exe --distro Ubuntu-24.04 --no-setup validate "$PWD/test-output/Windows Export/Windows-Smoke.ios.caipack"
+          if ($LASTEXITCODE -ne 0) { throw "Windows/WSL validation failed" }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-wsl-compiler-proof
+          path: test-output/Windows Export/Windows-Smoke.ios.caipack
+          retention-days: 7
   compiler:
     runs-on: ubuntu-24.04
     timeout-minutes: 30

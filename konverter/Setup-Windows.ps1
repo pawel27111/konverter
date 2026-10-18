@@ -12,7 +12,12 @@ if ($Distro -notmatch '^[a-zA-Z0-9_.-]+$' -or $Distro.StartsWith('-')) {
 $wsl = Get-Command wsl.exe -ErrorAction SilentlyContinue
 $installed = @()
 if ($wsl) {
-    $installed = @((& wsl.exe --list --quiet 2>$null) -replace "`0", "" | ForEach-Object { $_.Trim() })
+    try {
+        $installed = @((& wsl.exe --list --quiet 2>$null) -replace "`0", "" | ForEach-Object { $_.Trim() })
+    } catch {
+        # A fresh WSL installation may report that no distribution is registered yet.
+        $installed = @()
+    }
 }
 if (-not $wsl -or $installed -notcontains $Distro) {
     $admin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
