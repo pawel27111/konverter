@@ -7,6 +7,23 @@
 - Upstream offline tests: **402 passed, 1 skipped, 11 deselected**. Live/network/model download tests are excluded by the upstream default test configuration.
 - Native compiler probe: an actual Torch exported program was converted with `TorchConverter` and saved as `.aimodel`, containing `main.mlirb`, `main.hash` and `metadata.json`.
 - Full local adapter path: generated a small random-weight SD1-compatible diffusers pipeline with `scripts/compiler_smoke.py`, exported it through `python -m konverter --engine-dir ... convert ... --target ios`, produced real TextEncoder, UNet and VAEDecoder assets, tokenizer and manifest, and passed the upstream `.caipack` validator. No fake converter/program objects were used in this export.
+- Real INT4 export of the same fixture for the macOS target also succeeded. The native quantizer reported applied INT4 weight quantization, and the resulting package passed validation.
+
+## Windows acceptance result
+
+**All five jobs passed** in [workflow run 39153235201](https://github.com/pawel27111/konverter/actions/runs/39153235201), software commit `407d5e839410e4b0d87516dbb9083a07241a127d`:
+
+- Windows and Linux unit/integration tests, including a regression for redirected legacy-code-page output.
+- Native desktop startup at both 980×800 and 780×660, form-to-command mapping, and PowerShell installer syntax.
+- Frozen Windows x64 GUI and CLI built and started successfully.
+- Fresh Linux compiler setup, real synthetic SD1 export, and independent package validation.
+- **Fresh WSL2/Ubuntu setup on Windows Server 2025, compiler installation through the actual Windows EXE, real export from `Modell ä & test` to a Windows output folder, and independent validation through that EXE.**
+
+The downloadable `Konverter-Windows-x64.zip` contains both executables, the setup script, instructions and available bundled dependency licenses. SHA-256 of the inner application ZIP from that run:
+
+```text
+5d2bf9f9aaf256d34653411d38c3542a02d7fb4fc8d9ac68690651277198047a
+```
 
 ## Continuous verification
 
