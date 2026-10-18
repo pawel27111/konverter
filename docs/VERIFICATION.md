@@ -18,12 +18,13 @@ The [GitHub workflow](https://github.com/pawel27111/konverter/actions/workflows/
 - Build both Windows x64 executables and start the frozen GUI/CLI.
 - Fresh automatic Linux engine installation from the pinned dependency lock.
 - Real synthetic diffusion export and independent package validation.
+- Actual frozen Windows CLI → newly installed WSL2 → real synthetic export → package validation, including spaces, Unicode and `&` in a Windows source path.
 
 ## Scope of the evidence
 
 The synthetic export verifies the compiler and packaging path; its small random weights do not establish real-model image quality. Family support is inherited from the original converter and is not a claim that every family has been converted here. Structural package validation does not execute the model on Apple hardware.
 
-Windows-hosted WSL2 integration, UAC/reboot handling on a clean Windows installation, full-size production checkpoints, and inference on supported Apple devices still require their corresponding hardware acceptance checks. The CI's native Windows build tests and its Linux compiler test cover separate parts of this path.
+UAC/reboot handling on a clean consumer Windows installation, full-size production checkpoints on Windows 10/11, and inference on supported Apple devices still require their corresponding hardware acceptance checks. The automated Windows/WSL2 integration test runs on GitHub's Windows Server 2025 runner.
 
 ## Why local WSL2 is possible
 

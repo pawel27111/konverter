@@ -94,6 +94,12 @@ class BackendTests(unittest.TestCase):
         self.assertIn("def main", source_file("supervisor.py"))
         self.assertTrue(Path(__file__).resolve().parents[1].joinpath("konverter/Setup-Windows.ps1").is_file())
 
+    def test_cli_redirected_to_a_legacy_code_page_preserves_unicode(self):
+        result = subprocess.run([sys.executable, "-m", "konverter", "--help"],
+            env={**os.environ, "PYTHONIOENCODING": "cp1252"}, capture_output=True, timeout=15)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("Windows → Apple", result.stdout.decode("utf-8"))
+
 
 @unittest.skipUnless(sys.platform == "linux", "Process group semantics require Linux/WSL")
 class SupervisorIntegration(unittest.TestCase):
