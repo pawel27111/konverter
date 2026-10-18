@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "konverter-coreai"
+version = "0.2.0"
+description = "Windows desktop converter for Apple Core AI diffusion packs, using a local WSL2 engine"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+dependencies = []
+
+[project.scripts]
+konverter = "konverter.cli:main"
+
+[project.gui-scripts]
+konverter-gui = "konverter.gui:main"
+
+[tool.setuptools]
+packages = ["konverter"]
+
+[tool.setuptools.package-data]
+konverter = ["Setup-Windows.ps1"]

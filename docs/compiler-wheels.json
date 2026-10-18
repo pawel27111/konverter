@@ -1,0 +1,37 @@
+{
+  "checked_on": "2026-10-18",
+  "source": "https://pypi.org/pypi/coreai-core/1.0.0b2/json",
+  "version": "1.0.0b2",
+  "files": [
+    {
+      "filename": "coreai_core-1.0.0b2-cp311-cp311-macosx_26_0_arm64.whl",
+      "sha256": "b56e27df17f908fbb2e2b2a2352a54432dc7e2d01186ccebdcaf393740cd38b5",
+      "size": 21348090
+    },
+    {
+      "filename": "coreai_core-1.0.0b2-cp311-cp311-manylinux_2_34_x86_64.whl",
+      "sha256": "243d4e02f60b1e945c9b79c4e187be5d0f6a493e51282c9135db98f116f49ad6",
+      "size": 63325814
+    },
+    {
+      "filename": "coreai_core-1.0.0b2-cp312-cp312-macosx_26_0_arm64.whl",
+      "sha256": "abea920426c142ffbb6d916b463c77dc88b61439070d4d644fac1adc5bafbbfd",
+      "size": 21349085
+    },
+    {
+      "filename": "coreai_core-1.0.0b2-cp312-cp312-manylinux_2_34_x86_64.whl",
+      "sha256": "d4998c5713af9e1bbff2a97d906a54a1d8f265723ebfdafb267f3c35191a1b8e",
+      "size": 63327435
+    },
+    {
+      "filename": "coreai_core-1.0.0b2-cp313-cp313-macosx_26_0_arm64.whl",
+      "sha256": "6b9a92d3d6ee0447cd5265d7b52dabdb57215aa8701f7a941ef83de2ecd474ea",
+      "size": 21349442
+    },
+    {
+      "filename": "coreai_core-1.0.0b2-cp313-cp313-manylinux_2_34_x86_64.whl",
+      "sha256": "42ac86903bde5d013280b8865e4c05f999632de7f772a0ef96b69c59a97fbeca",
+      "size": 63328183
+    }
+  ]
+}

@@ -1,0 +1,85 @@
+name: Test and Windows build
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [ubuntu-24.04, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+      - run: python -m pip install .
+      - run: python -m unittest discover -s tests -v
+      - name: Windows UI smoke test
+        if: runner.os == 'Windows'
+        run: python -m konverter.gui --smoke-test
+      - name: Parse Windows installer
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $errors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile("$PWD/konverter/Setup-Windows.ps1", [ref]$null, [ref]$errors) | Out-Null
+          if ($errors.Count) { throw ($errors | Out-String) }
+  windows:
+    needs: test
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+      - run: python -m pip install . pyinstaller==6.22.3
+      - run: python scripts/build_windows.py
+      - name: Check console executable
+        shell: pwsh
+        run: |
+          & ./dist/konverter-cli.exe --version
+          if ($LASTEXITCODE -ne 0) { throw "CLI failed" }
+          & ./dist/konverter-cli.exe convert --help
+          if ($LASTEXITCODE -ne 0) { throw "CLI help failed" }
+      - name: Check desktop executable
+        shell: pwsh
+        run: |
+          $process = Start-Process ./dist/Konverter.exe -ArgumentList '--smoke-test' -PassThru -Wait
+          if ($process.ExitCode -ne 0) { throw "GUI executable failed: $($process.ExitCode)" }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Konverter-Windows-x64
+          path: Konverter-Windows-x64.zip
+          if-no-files-found: error
+          retention-days: 30
+  compiler:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+      - name: Set up actual Linux compiler
+        run: python -m konverter setup
+      - name: Check complete CLI option contract
+        env:
+          UPSTREAM_ENGINE: '1'
+        run: ~/.local/share/konverter/engine-873560b6f9c9/.venv/bin/python -m unittest discover -s tests -p test_contract.py -v
+      - name: Generate random-weight diffusion fixture
+        run: ~/.local/share/konverter/engine-873560b6f9c9/.venv/bin/python scripts/compiler_smoke.py test-output/fixture
+      - name: Export real Core AI assets and package
+        run: python -m konverter --no-setup convert test-output/fixture --target ios --name Konverter-Smoke --license-name MIT --output-dir test-output
+      - name: Independently validate generated package
+        run: python -m konverter --no-setup validate test-output/Konverter-Smoke.ios.caipack
+      - uses: actions/upload-artifact@v4
+        with:
+          name: synthetic-compiler-proof
+          path: test-output/Konverter-Smoke.ios.caipack
+          retention-days: 7

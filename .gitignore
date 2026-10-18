@@ -1,0 +1,17 @@
+__pycache__/
+*.py[cod]
+.venv/
+*.egg-info/
+.pytest_cache/
+build/
+dist/
+*.spec
+.env
+*.caipack
+*.safetensors
+*.ckpt
+*.log
+outputs/
+Konverter-Windows-x64.zip
+test-output/
+.DS_Store
